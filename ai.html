@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Voice Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        #response {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>AI Voice Assistant</h1>
+    <p id="response">Assistant is listening...</p>
+
+    <script>
+        // Check if browser supports Speech Recognition
+        if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+            document.getElementById('response').innerText = "Speech Recognition is not supported in your browser.";
+        }
+
+        // Initialize SpeechRecognition
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.continuous = true;  // Keep listening continuously
+        recognition.interimResults = true;  // Get interim results while listening
+
+        recognition.onstart = function() {
+            document.getElementById('response').innerText = "Listening started...";
+        };
+
+        recognition.onresult = function(event) {
+            const userQuery = event.results[event.results.length - 1][0].transcript.toLowerCase();
+            console.log('User Query:', userQuery); // Log user input to check
+            document.getElementById('response').innerText = `You said: ${userQuery}`;
+            processQuery(userQuery);
+        };
+
+        recognition.onerror = function(event) {
+            console.error('SpeechRecognition Error:', event.error); // Log error to console for debugging
+            document.getElementById('response').innerText = "I am having trouble understanding you, please try again.";
+        };
+
+        recognition.onend = function() {
+            recognition.start(); // Restart listening when it stops
+        };
+
+        // Start listening when the page loads
+        recognition.start();
+
+        // Function to process the user's query and respond
+        function processQuery(query) {
+            const synth = window.speechSynthesis;
+            const voices = synth.getVoices();
+            
+            // Try to find a Hindi or English female voice
+            const hindiFemaleVoice = voices.find(voice => voice.lang === "hi-IN" && voice.name.toLowerCase().includes("female"));
+            const englishFemaleVoice = voices.find(voice => voice.lang === "en-US" && voice.name.toLowerCase().includes("female"));
+            const selectedVoice = hindiFemaleVoice || englishFemaleVoice || voices[0];  // Default to first available voice
+
+            const utterance = new SpeechSynthesisUtterance();
+            utterance.voice = selectedVoice;  // Use selected voice
+            let response = '';
+
+            // Check for specific queries and respond
+            if (query.includes('भारत के बारे में बताओ') || query.includes('tell about india')) {
+                response = 'भारत एशिया महाद्वीप में स्थित एक विशाल देश है। इसकी राजधानी दिल्ली है।';
+            } else if (query.includes('समय') || query.includes('time')) {
+                const time = new Date().toLocaleTimeString();
+                response = `वर्तमान समय है: ${time}`;
+            } else if (query.includes('मौसम') || query.includes('weather')) {
+                response = 'मैं अभी मौसम के बारे में जानकारी नहीं ले सकता हूँ।';
+            } else if (query.includes('तुम्हारा नाम क्या है') || query.includes('what is your name')) {
+                response = 'मेरा नाम AI Voice Assistant है।';
+            } else {
+                response = 'मुझे खेद है, मैं यह नहीं समझ सका।';
+            }
+
+            utterance.text = response;
+            synth.speak(utterance);  // Speak the response
+            document.getElementById('response').innerText = response;
+        }
+    </script>
+</body>
+</html>
